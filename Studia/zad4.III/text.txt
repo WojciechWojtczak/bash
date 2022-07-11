@@ -1,0 +1,6 @@
+This contains text	Hello
+that we want to		TeSt
+serch for, but in	test
+a case insensitive	XXXX
+manner using the sed	TEST
+editor.			Bye bye.

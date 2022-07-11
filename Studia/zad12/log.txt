@@ -1,0 +1,6 @@
+--------------------------
+Tue May 24 12:21:06 PM EDT 2022
+User: kali
+Lista usunietych plikow:
+- /home/kali/Desktop/dla Oli :P/zad12/test.txt
+- /home/kali/Desktop/dla Oli :P/zad12/text5

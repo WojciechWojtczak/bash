@@ -1,0 +1,10 @@
+for b in {a..z};
+do
+	count=$(cat book.pdf | grep $b | wc -l)
+	echo "W ksiazce znajduej sie $count liter $b"
+done
+for c in {A..Z};
+do 
+        count=$(cat book.pdf | grep $c | wc -l)
+        echo "W ksiazce znajduej sie $count liter $c"
+done

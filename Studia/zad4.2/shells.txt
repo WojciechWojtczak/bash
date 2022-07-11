@@ -1,0 +1,8 @@
+ sh
+ bash
+ rbash
+ dash
+ zsh
+ tmux
+ screen
+ pwsh

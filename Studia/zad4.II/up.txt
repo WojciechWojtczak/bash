@@ -1,0 +1,4 @@
+#!/bin/bash
+curl https://www.gutenberg.org/files/19033/19033-h/19033-h.htm > book.pdf
+cat book.pdf | grep "<h2>" | sed "s/^<h2>.*;//g" | sed "s/<\/h2>/ /g" > chapters.txt
+chapters.txt

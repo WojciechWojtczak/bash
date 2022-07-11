@@ -1,0 +1,6 @@
+#@start
+echo ""
+echo "Oto rozdzialy ksiazki:"
+cat chapters.txt
+echo ""
+#@end
