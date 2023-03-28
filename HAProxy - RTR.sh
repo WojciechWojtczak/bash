@@ -1,13 +1,17 @@
 #!/bin/bash
-apt install HAProxy
-echo 'frontend www_front_servers' >>/etc/haproxy/haproxy.cfg
-echo '	bind *:80' >>/etc/haproxy/haproxy.cfg
-echo '	default_backend www_backend_servers' >>/etc/haproxy/haproxy.cfg
-echo '	# Enable send X-Forwarded-For header' >>/etc/haproxy/haproxy.cfg
-echo '	option	forwardfor' >>/etc/haproxy/haproxy.cfg
-echo ' ' >>/etc/haproxy/haproxy.cfg
-echo 'backend www_backend_servers' >>/etc/haproxy/haproxy.cfg
-echo '	balance roundrobin' >>/etc/haproxy/haproxy.cfg
-echo '	server vm01 192.168.10.11:80 check' >>/etc/haproxy/haproxy.cfg
-echo '	server vm02 192.168.10.12:80 check' >>/etc/haproxy/haproxy.cfg
+
+# Install and configure HAProxy
+apt install -y haproxy
+cat <<EOF >> /etc/haproxy/haproxy.cfg
+frontend www_front_servers
+	bind *:80
+	default_backend www_backend_servers
+	# Enable send X-Forwarded-For header
+	option forwardfor
+
+backend www_backend_servers
+	balance roundrobin
+	server vm01 192.168.10.11:80 check
+	server vm02 192.168.10.12:80 check
+EOF
 systemctl restart haproxy
