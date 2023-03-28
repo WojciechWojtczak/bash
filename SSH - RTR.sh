@@ -1,8 +1,12 @@
 #!/bin/bash
 
+#Zmiana konfiguracji ssh
 sed -i -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-service sshd restart
+#Restart usługi
+systemctl restart sshd
+#Wygenerowanie klucza
 ssh‐keygen –b 2048 –t rsa
-ssh-copy-id 192.168.10.101
-ssh-copy-id 192.168.10.102
-ssh-copy-id 192.168.10.103
+#Przesłanie go do zdalnych hostów
+for ip in 101 102 103; do
+    ssh-copy-id 192.168.10.$ip
+done
