@@ -1,34 +1,57 @@
 #!/bin/bash
-apt  install ‐y bind9
-echo 'options { ' > /etc/bind/named.conf.options
-echo 'directory "/var/cache/bind";' >> /etc/bind/named.conf.options
-echo 'listen‐on port 53 {localhost; 192.168.10.1/24; };' >> /etc/bind/named.conf.options
-echo 'allow‐query { localhost; 192.168.10.0/24; };' >> /etc/bind/named.conf.options
-echo 'forwarders { 127.0.0.1;9.9.9.9; };' >> /etc/bind/named.conf.options
-echo 'recursion yes;' >> /etc/bind/named.conf.options
-echo '};' >> /etc/bind/named.conf.options
-echo 'Podaj nazwę strefy'
-read zona
-echo 'zone "'$zona'l" IN { ' >  /etc/bind/named.conf.local
-echo 'type master; ' >>  /etc/bind/named.conf.local
-echo 'file "'$zona'.zone"; ' >>  /etc/bind/named.conf.local
-echo '};' >>  /etc/bind/named.conf.local
 
-echo '$TTL 86400 ' > /var/cache/bind/sanlab.local.zone
-echo '@ IN SOA sanlab.local root.sanlab.local ( ' >> /var/cache/bind/sanlab.local.zone
-echo '2020041801 ' >> /var/cache/bind/sanlab.local.zone
-echo '3600 ' >> /var/cache/bind/sanlab.local.zone
-echo '900 ' >> /var/cache/bind/sanlab.local.zone
-echo '604800 ' >> /var/cache/bind/sanlab.local.zone
-echo '86400 ' >> /var/cache/bind/sanlab.local.zone
-echo ') ' >> /var/cache/bind/sanlab.local.zone
-echo '@ IN NS rtr ' >> /var/cache/bind/sanlab.local.zone
-echo 'rtr IN A 192.168.10.1 ' >> /var/cache/bind/sanlab.local.zone
-echo 'vm01 IN A 192.168.10.101 ' >> /var/cache/bind/sanlab.local.zone
-echo 'vm02 IN A 192.168.10.102 ' >> /var/cache/bind/sanlab.local.zone
-echo 'www IN CNAME vm01 ' >> /var/cache/bind/sanlab.local.zone
-named‐checkconf
-named‐checkzone $zona /var/cache/bind/$zona.zone
-ssh 192.168.10.101 "echo 'nameserver 192.168.10.1' >> /etc/resolv.conf"
-ssh 192.168.10.102 "echo 'nameserver 192.168.10.1' >> /etc/resolv.conf"
-ssh 192.168.10.103 "echo 'nameserver 192.168.10.1' >> /etc/resolv.conf"
+# Install bind9 package
+if ! apt install -y bind9; then
+    echo "Błąd: nie udało się zainstalować bind9."
+    exit 1
+fi
+# Configure named.conf.options
+cat << EOF > /etc/bind/named.conf.options
+options {
+    directory "/var/cache/bind";
+    listen-on port 53 { localhost; 192.168.10.1/24; };
+    allow-query { localhost; 192.168.10.0/24; };
+    forwarders { 127.0.0.1; 9.9.9.9; };
+    recursion yes;
+};
+EOF
+
+# Prompt for zone name
+read -p "Podaj nazwę strefy: " zona
+
+# Configure named.conf.local
+cat << EOF > /etc/bind/named.conf.local
+zone "$zona" IN {
+    type master;
+    file "$zona.zone";
+};
+EOF
+
+# Configure zone file
+cat << EOF > /var/cache/bind/$zona.zone
+\$TTL 86400
+@ IN SOA $zona. root.$zona. (
+    $(date +%Y%m%d)01
+    3600
+    900
+    604800
+    86400
+)
+@ IN NS rtr.$zona.
+rtr IN A 192.168.10.1
+vm01 IN A 192.168.10.101
+vm02 IN A 192.168.10.102
+www IN CNAME vm01
+EOF
+
+# Check named configuration and zone file syntax
+if ! named-checkconf; then
+    echo "Błąd: named-checkconf zwrócił błąd."
+    exit 1
+fi
+named-checkzone $zona /var/cache/bind/$zona.zone
+
+# Update resolv.conf on client machines
+for ip in 101 102 103; do
+    ssh 192.168.10.$ip "echo 'nameserver 192.168.10.1' >> /etc/resolv.conf"
+done
