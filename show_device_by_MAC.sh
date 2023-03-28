@@ -1,26 +1,28 @@
 #!/bin/bash
-
-# Mapowanie sieci i wypisanie adresów IP i MAC do pliku ip.csv. Struktura pliku to [ip] [MAC Adres]
-sudo nmap -sn 192.168.x.x/24 | awk '/^Nmap/{ip=$NF}/MAC Address:/{print ip,$NF}' | sed 's/_gateway//g' | sed 's/(\(.*\))/\1/g' | sed '/^$/d' > ip.csv
-
-# Porównanie danych z plikiem mac.csv i wypisanie wyników. Struktura pliku to [MAC Adres] [Podana nazwa domyślnie ?]
-while IFS=, read -r ip mac_name || [ -n "$ip" ]
+#mapuje wskazaną sieć i wypisuje adresy IP i adresy MAC do pliku ip.csv. Struktura pliku to [ip] [MAC Addres]
+sudo nmap -sn 192.168.x.x/24 | sed 's/ 1/\n1/g' | sed 's/^H.*//g' | sed 's/MAC Address: //g' | sed 's/^.*_gateway //g' | sed '/^$/d' | sed 's/^N.*//g' | sed 's/(1.*/192.168.100.1/g' | sed 's/(.*//g' | sed 's/^Sta.*//g' | sed 's/^.*CEST//g' | sed '/^$/d' | sed '2~2 s/$/\;/g' | sed '1~2 s/$/ /g' | sed -z 's/\n//g' | sed 's/;/\n/g' > ip.csv
+#wypisanie danych i porównanie ich z przygotowaną bazą danych mac.csv. Struktura pliku to [MAC Adres] [Podana nazwa domyślnie ?]
+while ISP="," read -r co1 co2
 do
-    if grep -Fq "$mac_name" mac.csv; then
-        mac_address=$(grep -F "$mac_name" mac.csv | awk '{print $1}')
-        echo "_______________________________________________________________________"
-        echo "Adres MAC $mac_address jest powiązany z maszyną: $mac_name"
-        echo "znajdziesz ją pod adresem IP: $ip"
-        echo "_______________________________________________________________________"
-    else
-        echo "_______________________________________________________________________"
-        echo "Adres MAC $mac_name nie znajduje się w pliku mac.csv"
-        echo "IP urządzenia: $ip"
-        echo "Dopisuje MAC do pliku mac.csv"
-        echo "$mac_address $mac_name ?" >> mac.csv
-        echo "_______________________________________________________________________"
-    fi
+ if grep -F "$co2" mac.csv > trash;
+ then
+  while ISP="," read -r col1 col2
+  do
+   if [ "$co2" == "$col1" ];
+   then
+    echo "_______________________________________________________________________"
+    echo "Mac addres $co2 jest powiązany z maszyną: $col2"
+    echo "znajdziesz ją pod adresem IP: $co1"
+    echo "_______________________________________________________________________"
+   fi
+  done < mac.csv
+ else
+  echo "_______________________________________________________________________"
+  echo "MAC adres $co2 nie znajduje się w pliku mac.csv"
+  echo "IP urządzenia: $co1"
+  echo "Dopisuje MAC do pliku mac.csv"
+  echo "$co2 ?" >> mac.csv
+  echo "_______________________________________________________________________"
+ fi
 done < ip.csv
-
-# Usuwanie pliku tymczasowego
-rm ip.csv
+rm trash
